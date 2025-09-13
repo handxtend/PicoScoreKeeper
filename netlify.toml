@@ -1,0 +1,18 @@
+# Netlify configuration (optional but nice to have)
+
+[build]
+  # If you add a build step later, set command here
+  command = ""
+  publish = "frontend"
+
+# Simple SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Optional proxy to backend on Render (see note in _redirects)
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://picoscorekeeper.onrender.com/:splat"
+#   status = 200
