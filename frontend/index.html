@@ -18,7 +18,7 @@
     <section class="card">
       <h2>Backend</h2>
       <label>API Base:
-        <input id="apiBase" value="http://localhost:8787" />
+        <input id="apiBase" value="https://picoscorekeeper.onrender.com" />
       </label>
       <button id="saveApi">Save</button>
       <span id="health" class="note"></span>
@@ -85,6 +85,15 @@
       <pre id="standOut" class="out"></pre>
     </section>
   </main>
+
+  <!-- Make the API base globally available for /src/app.js -->
+  <script>
+    window.API_BASE = window.API_BASE || document.getElementById('apiBase')?.value || 'https://picoscorekeeper.onrender.com';
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('apiBase');
+      if (el && !el.value) el.value = window.API_BASE;
+    });
+  </script>
 
   <script type="module" src="/src/app.js"></script>
 </body>

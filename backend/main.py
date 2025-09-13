@@ -1,14 +1,23 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from uuid import uuid4
+import os
 
 app = FastAPI(title='PSK Starter API')
 
+# --- CORS from env (fallback to permissive during development) ---
+cors_env = os.environ.get("CORS_ALLOW", "*")
+if cors_env == "*" or not cors_env.strip():
+    allow_origins = ["*"]
+else:
+    allow_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=allow_origins,
     allow_methods=['*'],
     allow_headers=['*'],
 )
@@ -142,6 +151,14 @@ def compute_standings(divId: str):
     for t in table.values():
         t['PD'] = t['PF'] - t['PA']
     return table
+
+@app.get('/', include_in_schema=False)
+def root():
+    return {'service': 'PicoScoreKeeper API','ok': True,'health': '/health','docs': '/docs'}
+
+@app.get('/favicon.ico', include_in_schema=False)
+def favicon():
+    return PlainTextResponse('', status_code=204)
 
 @app.get('/health')
 def health(): return {'ok': True}
