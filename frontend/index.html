@@ -7,6 +7,18 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="/src/styles.css">
   <meta name="theme-color" content="#0ea5e9" />
+
+  <!-- OPTION A: Use Netlify proxy so the app calls /api/... (no CORS headaches) -->
+  <script>
+    // All API requests should go to /api/* and Netlify will forward them to Render.
+    window.API_BASE = '/api';
+
+    // Keep the little "API Base" input in sync so the UI shows the effective value.
+    window.addEventListener('DOMContentLoaded', () => {
+      const inp = document.getElementById('apiBase');
+      if (inp) inp.value = window.API_BASE;
+    });
+  </script>
 </head>
 <body>
   <header class="bar">
@@ -18,10 +30,12 @@
     <section class="card">
       <h2>Backend</h2>
       <label>API Base:
-        <input id="apiBase" value="https://picoscorekeeper.onrender.com" />
+        <!-- this will be set to '/api' on load by the script above -->
+        <input id="apiBase" value="/api" />
       </label>
       <button id="saveApi">Save</button>
       <span id="health" class="note"></span>
+      <p class="note">Proxy active: the app calls <code>/api</code> and Netlify forwards to your Render backend.</p>
     </section>
 
     <section class="grid two">
@@ -85,15 +99,6 @@
       <pre id="standOut" class="out"></pre>
     </section>
   </main>
-
-  <!-- Make the API base globally available for /src/app.js -->
-  <script>
-    window.API_BASE = window.API_BASE || document.getElementById('apiBase')?.value || 'https://picoscorekeeper.onrender.com';
-    document.addEventListener('DOMContentLoaded', () => {
-      const el = document.getElementById('apiBase');
-      if (el && !el.value) el.value = window.API_BASE;
-    });
-  </script>
 
   <script type="module" src="/src/app.js"></script>
 </body>
