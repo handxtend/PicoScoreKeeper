@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pico Score Keeper — Starter</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/src/styles.css">
+  <meta name="theme-color" content="#0ea5e9" />
+</head>
+<body>
+  <header class="bar">
+    <h1>PSK — Pico Score Keeper</h1>
+    <button id="btn-install" hidden>Install</button>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>Backend</h2>
+      <label>API Base:
+        <input id="apiBase" value="http://localhost:8787" />
+      </label>
+      <button id="saveApi">Save</button>
+      <span id="health" class="note"></span>
+    </section>
+
+    <section class="grid two">
+      <div class="card">
+        <h2>Create User</h2>
+        <div class="row"><input id="uFirst" placeholder="First name" /></div>
+        <div class="row"><input id="uLast" placeholder="Last name" /></div>
+        <div class="row"><input id="uEmail" placeholder="Email" /></div>
+        <div class="row"><input id="uDUPR" placeholder="DUPR ID (optional)" /></div>
+        <button id="btnCreateUser">Create</button>
+        <pre id="usersOut" class="out"></pre>
+      </div>
+
+      <div class="card">
+        <h2>Event & Division</h2>
+        <div class="row"><input id="eName" placeholder="Event name" /></div>
+        <div class="row"><input id="eVenue" placeholder="Venue" /></div>
+        <button id="btnEvent">Create Event</button>
+        <div class="row"><input id="dName" placeholder="Division name" /></div>
+        <div class="row">
+          <select id="dType">
+            <option value="singles">Singles</option>
+            <option value="doubles">Doubles (fixed partner)</option>
+          </select>
+        </div>
+        <button id="btnDivision">Create Division</button>
+        <pre id="divOut" class="out"></pre>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Register & Schedule</h2>
+      <div class="row">
+        <input id="regUserId" placeholder="UserId" />
+        <input id="regPartnerId" placeholder="PartnerUserId (for doubles)" />
+        <button id="btnRegister">Register</button>
+      </div>
+      <div class="row">
+        <button id="btnSchedule">Generate Round Robin</button>
+      </div>
+      <pre id="matchOut" class="out"></pre>
+    </section>
+
+    <section class="card">
+      <h2>Submit → Confirm Score</h2>
+      <div class="row">
+        <input id="mId" placeholder="MatchId" />
+        <input id="byTeam" placeholder="byTeam (teamId)" />
+        <input id="side" placeholder="side A/B" />
+      </div>
+      <div class="row">
+        <input id="g1a" placeholder="G1 A" />
+        <input id="g1b" placeholder="G1 B" />
+        <button id="btnSubmit">Submit</button>
+      </div>
+      <div class="row">
+        <input id="subId" placeholder="SubmissionId" />
+        <button id="btnConfirm">Confirm</button>
+      </div>
+      <div class="row"><button id="btnStandings">Refresh Standings</button></div>
+      <pre id="standOut" class="out"></pre>
+    </section>
+  </main>
+
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>
