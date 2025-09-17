@@ -19,12 +19,28 @@
       if (inp) inp.value = window.API_BASE;
     });
   </script>
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0A0E16">
+<style>
+/* === PSK Global Nav === */
+.psk-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;
+  padding:10px 16px;background:#0f1730;border-bottom:1px solid rgba(255,255,255,.12)}
+.psk-nav a{color:#8ecbff;text-decoration:none}
+.psk-nav .brand{font-weight:800;color:#eaf2ff}
+.psk-nav nav{display:flex;gap:14px;flex-wrap:wrap}
+</style>
 </head>
 <body>
-  <header class="bar">
-    <h1>PSK — Pico Score Keeper</h1>
-    <button id="btn-install" hidden>Install</button>
-  </header>
+  <header class="psk-nav">
+  <a class="brand" href="/index.html">PSK</a>
+  <nav>
+    <a href="/events.html">Events</a>
+    <a href="/viewer.html">Viewer</a>
+    <a href="/courts.html">Courts</a>
+    <a href="/scoreboard.html">Scoreboard</a>
+  </nav>
+</header>
+<div style="padding:8px 16px;background:#0c1530;border-bottom:1px solid rgba(255,255,255,.08)"><a href="/events.html" style="margin-right:12px;color:#8ecbff;text-decoration:none">Events</a><a href="/viewer.html" style="margin-right:12px;color:#8ecbff;text-decoration:none">Public Viewer</a><a href="/courts.html" style="margin-right:12px;color:#8ecbff;text-decoration:none">Courts</a><a href="/scoreboard.html" style="color:#8ecbff;text-decoration:none">Scoreboard</a></div>
+<div style="padding:8px 16px;background:#0c1530;border-bottom:1px solid rgba(255,255,255,.08)"><a href="/viewer.html" style="margin-right:12px;color:#8ecbff;text-decoration:none">Public Viewer</a><a href="/scoreboard.html" style="color:#8ecbff;text-decoration:none">Scoreboard</a></div>
 
   <main class="wrap">
     <section class="card">
@@ -101,5 +117,12 @@
   </main>
 
   <script type="module" src="/src/app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(console.error);
+  });
+}
+</script>
 </body>
 </html>

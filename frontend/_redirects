@@ -1,1 +1,6 @@
-/LICENSE.txt /PicoScoreKeeper /README.portable /bin /cmd /dev /etc /git-bash.exe /git-cmd.exe /mingw64 /proc /tmp /usr /index.html 200
+/viewer.html     /viewer.html     200
+/scoreboard.html /scoreboard.html 200
+/events.html     /events.html     200
+/courts.html     /courts.html     200
+/api/*           https://picoscorekeeper.onrender.com/:splat  200
+/*               /index.html                                   200

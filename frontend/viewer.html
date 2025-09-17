@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PSK — Public Viewer</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon-192.png" sizes="192x192">
+  <style>
+
+/* === PSK Global Nav === */
+.psk-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;
+  padding:10px 16px;background:#0f1730;border-bottom:1px solid rgba(255,255,255,.12)}
+.psk-nav a{color:#8ecbff;text-decoration:none}
+.psk-nav .brand{font-weight:800;color:#eaf2ff}
+.psk-nav nav{display:flex;gap:14px;flex-wrap:wrap}
+
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0b1220;color:#e7eefb;margin:0;}
+    header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#0f1730;position:sticky;top:0;z-index:5;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0}
+    select,input{background:#0e1a2f;color:#e7eefb;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;min-width:220px}
+    input::placeholder{color:rgba(255,255,255,0.82);opacity:1}
+    .card{background:#0f1931;border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px}
+    h2{margin:8px 0 8px;font-weight:600;font-size:18px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px 8px;border-bottom:1px dashed rgba(255,255,255,0.12);text-align:left}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#122343;border:1px solid rgba(255,255,255,0.18)}
+    .muted{opacity:.8}
+    a{color:#8ecbff;text-decoration:none}
+  </style>
+</head>
+<body>
+  <header class="psk-nav">
+  <a class="brand" href="/index.html">PSK</a>
+  <nav>
+    <a href="/events.html">Events</a>
+    <a href="/viewer.html">Viewer</a>
+    <a href="/courts.html">Courts</a>
+    <a href="/scoreboard.html">Scoreboard</a>
+  </nav>
+</header>
+  <div class="container">
+    <div class="row">
+      <input id="divisionId" placeholder="Paste Division ID (d123...)">
+      <button id="btnLoad" class="pill">Load</button>
+      <span class="muted">or add ?division=ID to the URL</span>
+    </div>
+    <div class="row">
+      <div class="card" style="flex:2 1 520px">
+        <h2>Matches</h2>
+        <div id="matches">—</div>
+      </div>
+      <div class="card" style="flex:1 1 360px">
+        <h2>Standings</h2>
+        <div id="standings">—</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { API_BASE } from './src/api.js';
+    const $ = (s)=>document.querySelector(s);
+    const qs = new URLSearchParams(location.search);
+    const division = qs.get('division') || '';
+
+    const divInput = $('#divisionId');
+    if (division) divInput.value = division;
+
+    $('#btnLoad').addEventListener('click', ()=>{
+      const d = divInput.value.trim();
+      if (!d) return alert('Enter a division id');
+      loadAll(d);
+      const u = new URL(location.href); u.searchParams.set('division', d); history.replaceState(null,'',u);
+    });
+
+    async function loadAll(did){
+      try{
+        const [m, s] = await Promise.all([
+          fetch(`${API_BASE}/divisions/${did}/matches`).then(r=>r.json()),
+          fetch(`${API_BASE}/divisions/${did}/standings`).then(r=>r.json())
+        ]);
+        renderMatches(m);
+        renderStandings(s);
+      }catch(e){
+        $('#matches').textContent = 'Failed to load. Check Division ID.';
+        console.error(e);
+      }
+    }
+
+    function renderMatches(data){
+      if (!data || !data.matches || !data.matches.length){
+        $('#matches').textContent = 'No matches yet. Organizer must Generate Round Robin.';
+        return;
+      }
+      const rows = data.matches.map(x=>`<tr>
+        <td class="muted">${x.matchId||x.id||''}</td>
+        <td><strong>${x.home||x.teamA||'A'}</strong> vs <strong>${x.away||x.teamB||'B'}</strong></td>
+        <td>${x.court?`Court ${x.court}`:''}</td>
+        <td>${x.status||''}</td>
+      </tr>`).join('');
+      $('#matches').innerHTML = `<table><thead><tr><th>ID</th><th>Teams</th><th>Court</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    function renderStandings(data){
+      const arr = data && (data.standings || data) || [];
+      if (!arr.length){ $('#standings').textContent = '—'; return; }
+      const rows = arr.map((r,i)=>`<tr>
+        <td>${i+1}</td><td>${r.team||r.user||r.name||'-'}</td><td>${r.wins??r.w||0}</td><td>${r.losses??r.l||0}</td><td>${r.points??r.p||0}</td>
+      </tr>`).join('');
+      $('#standings').innerHTML = `<table><thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    // auto-load if present
+    if (division) loadAll(division);
+    // poll every 10s
+    setInterval(()=>{ const d = ($('#divisionId').value||'').trim(); if(d) loadAll(d); }, 10000);
+  </script>
+</body>
+</html>

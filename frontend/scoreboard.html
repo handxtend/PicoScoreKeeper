@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PSK — Scoreboard</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon-192.png" sizes="192x192">
+  <style>
+
+/* === PSK Global Nav === */
+.psk-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;
+  padding:10px 16px;background:#0f1730;border-bottom:1px solid rgba(255,255,255,.12)}
+.psk-nav a{color:#8ecbff;text-decoration:none}
+.psk-nav .brand{font-weight:800;color:#eaf2ff}
+.psk-nav nav{display:flex;gap:14px;flex-wrap:wrap}
+
+    :root{--bg:#060b15;--panel:#0b1426;--border:rgba(255,255,255,.15);--text:#eaf2ff}
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{display:flex;gap:12px;align-items:center;padding:12px 16px;background:#0f1730;border-bottom:1px solid var(--border)}
+    .wrap{padding:16px;max-width:1000px;margin:0 auto}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .panel{flex:1 1 460px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .score{display:flex;align-items:center;justify-content:space-between;font-size:48px;font-weight:800;padding:12px 16px;background:#0a1b37;border:1px solid var(--border);border-radius:12px;margin-top:12px}
+    .muted{opacity:.8}
+    input,select{background:#0e1a2f;color:#e7eefb;border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+    input::placeholder{color:rgba(255,255,255,.82);opacity:1}
+  </style>
+</head>
+<body>
+  <header class="psk-nav">
+  <a class="brand" href="/index.html">PSK</a>
+  <nav>
+    <a href="/events.html">Events</a>
+    <a href="/viewer.html">Viewer</a>
+    <a href="/courts.html">Courts</a>
+    <a href="/scoreboard.html">Scoreboard</a>
+  </nav>
+</header>
+  <div class="wrap">
+    <div class="row" style="margin-bottom:12px">
+      <input id="divisionId" placeholder="Division ID (d123...)">
+      <input id="court" placeholder="Court # (optional)">
+      <button id="load">Load</button>
+    </div>
+    <div class="panel">
+      <div class="muted">Match</div>
+      <div id="meta">—</div>
+      <div class="score"><span id="home">A</span><span id="score">0 : 0</span><span id="away">B</span></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { API_BASE } from './src/api.js';
+    const $ = (s)=>document.querySelector(s);
+    const qs = new URLSearchParams(location.search);
+    $('#divisionId').value = qs.get('division')||'';
+    $('#court').value = qs.get('court')||'';
+
+    $('#load').addEventListener('click', ()=>{
+      const d = $('#divisionId').value.trim();
+      const c = $('#court').value.trim();
+      if (!d) return alert('Enter division id');
+      load(d,c);
+      const u=new URL(location.href); u.searchParams.set('division',d); if(c)u.searchParams.set('court',c); history.replaceState(null,'',u);
+    });
+
+    async function load(divisionId, court){
+      try{
+        const ms = await fetch(`${API_BASE}/divisions/${divisionId}/matches`).then(r=>r.json());
+        let m = (ms && ms.matches && ms.matches[0]) || null;
+        if (court){
+          m = (ms.matches||[]).find(x=> String(x.court||'')===String(court)) || m;
+        }
+        if(!m){ $('#meta').textContent='No matches yet'; return; }
+        $('#meta').textContent = (m.matchId||m.id||'') + (m.court?` • Court ${m.court}`:'');
+        $('#home').textContent = m.home||m.teamA||'A';
+        $('#away').textContent = m.away||m.teamB||'B';
+        const sc = (m.scoreA??m.a??0) + ' : ' + (m.scoreB??m.b??0);
+        $('#score').textContent = sc;
+      }catch(e){
+        console.error(e);
+        $('#meta').textContent = 'Failed to load';
+      }
+    }
+
+    // auto
+    if ($('#divisionId').value) load($('#divisionId').value, $('#court').value);
+    setInterval(()=>{ const d=$('#divisionId').value.trim(); if(d) load(d,$('#court').value.trim()); }, 8000);
+  </script>
+</body>
+</html>

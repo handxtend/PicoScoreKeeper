@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PSK — Events & Divisions</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon-192.png" sizes="192x192">
+  <style>
+
+/* === PSK Global Nav === */
+.psk-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;
+  padding:10px 16px;background:#0f1730;border-bottom:1px solid rgba(255,255,255,.12)}
+.psk-nav a{color:#8ecbff;text-decoration:none}
+.psk-nav .brand{font-weight:800;color:#eaf2ff}
+.psk-nav nav{display:flex;gap:14px;flex-wrap:wrap}
+
+    :root{--bg:#0a1223;--panel:#0f1931;--text:#e7eefb;--muted:#bcd2f7;--bd:rgba(255,255,255,.12)}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#0f1730;border-bottom:1px solid var(--bd)}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0}
+    .card{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:14px;flex:1 1 420px}
+    select,input,button{background:#0e1a2f;color:var(--text);border:1px solid var(--bd);border-radius:8px;padding:10px 12px}
+    input::placeholder{color:rgba(255,255,255,0.82);opacity:1}
+    ul{list-style:none;padding:0;margin:0}
+    li{padding:8px 0;border-bottom:1px dashed var(--bd);display:flex;gap:10px;align-items:center;justify-content:space-between}
+    a{color:#8ecbff;text-decoration:none}
+    .muted{opacity:.85}
+    .actions a{margin-left:10px}
+  </style>
+</head>
+<body>
+  <header class="psk-nav">
+  <a class="brand" href="/index.html">PSK</a>
+  <nav>
+    <a href="/events.html">Events</a>
+    <a href="/viewer.html">Viewer</a>
+    <a href="/courts.html">Courts</a>
+    <a href="/scoreboard.html">Scoreboard</a>
+  </nav>
+</header>
+  <div class="wrap">
+    <div class="row">
+      <div class="card">
+        <h2>Events</h2>
+        <div id="events">Loading…</div>
+      </div>
+      <div class="card">
+        <h2>Divisions</h2>
+        <div id="divisions" class="muted">Select an event</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="card" style="flex-basis:100%">
+        <h2>Manual (if events API not available)</h2>
+        <div class="row">
+          <input id="manualDivision" placeholder="Paste Division ID (d123…)">
+          <a id="m_viewer" class="actions" href="#" onclick="return false;">Open Viewer</a>
+          <a id="m_courts" class="actions" href="#" onclick="return false;">Courts Dashboard</a>
+          <a id="m_score" class="actions" href="#" onclick="return false;">Scoreboard</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { API_BASE } from './src/api.js';
+    const $ = (s)=>document.querySelector(s);
+
+    // Manual links
+    function wireManual(){
+      const getDiv=()=>($('#manualDivision').value||'').trim();
+      $('#m_viewer').addEventListener('click', ()=>{
+        const d=getDiv(); if(!d) return alert('Enter division id');
+        location.href = '/viewer.html?division='+encodeURIComponent(d);
+      });
+      $('#m_courts').addEventListener('click', ()=>{
+        const d=getDiv(); if(!d) return alert('Enter division id');
+        location.href = '/courts.html?division='+encodeURIComponent(d);
+      });
+      $('#m_score').addEventListener('click', ()=>{
+        const d=getDiv(); if(!d) return alert('Enter division id');
+        location.href = '/scoreboard.html?division='+encodeURIComponent(d);
+      });
+    }
+
+    async function listEvents(){
+      try{
+        const res = await fetch(`${API_BASE}/events`);
+        if(!res.ok) throw new Error('No /events');
+        const events = await res.json();
+        if(!Array.isArray(events) || events.length===0){
+          $('#events').innerHTML = '<div class="muted">No events yet. Create one in Admin Console.</div>';
+          return;
+        }
+        $('#events').innerHTML = '<ul>'+events.map(e=>`
+          <li>
+            <div>
+              <div><strong>${e.name||'Event'}</strong></div>
+              <div class="muted">${e.venue||''}</div>
+            </div>
+            <div class="actions">
+              <a href="#" data-event="${e.id}">View divisions</a>
+            </div>
+          </li>`).join('')+'</ul>';
+        Array.from(document.querySelectorAll('[data-event]')).forEach(a=>{
+          a.addEventListener('click', (ev)=>{
+            ev.preventDefault();
+            loadDivisions(a.getAttribute('data-event'));
+          });
+        });
+      }catch(_){
+        $('#events').innerHTML = '<div class="muted">Events API not found. Use the manual box below or create an event first.</div>';
+      }
+    }
+
+    async function loadDivisions(eventId){
+      $('#divisions').textContent = 'Loading…';
+      try{
+        const res = await fetch(`${API_BASE}/events/${eventId}/divisions`);
+        if(!res.ok) throw new Error();
+        const divisions = await res.json();
+        if(!Array.isArray(divisions) || divisions.length===0){
+          $('#divisions').innerHTML = '<div class="muted">No divisions found.</div>'; return;
+        }
+        $('#divisions').innerHTML = '<ul>'+divisions.map(d=>`
+          <li>
+            <div>
+              <div><strong>${d.name||d.skill||'Division'}</strong></div>
+              <div class="muted">${d.type||d.mode||''} • ${d.id}</div>
+            </div>
+            <div class="actions">
+              <a href="/viewer.html?division=${encodeURIComponent(d.id)}">Viewer</a>
+              <a href="/courts.html?division=${encodeURIComponent(d.id)}">Courts</a>
+              <a href="/scoreboard.html?division=${encodeURIComponent(d.id)}">Scoreboard</a>
+            </div>
+          </li>`).join('')+'</ul>';
+      }catch(e){
+        $('#divisions').innerHTML = '<div class="muted">Divisions API not found. Use manual links below.</div>';
+      }
+    }
+
+    wireManual();
+    listEvents();
+  </script>
+</body>
+</html>

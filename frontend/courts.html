@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PSK — Courts Dashboard</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon-192.png" sizes="192x192">
+  <style>
+
+/* === PSK Global Nav === */
+.psk-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;
+  padding:10px 16px;background:#0f1730;border-bottom:1px solid rgba(255,255,255,.12)}
+.psk-nav a{color:#8ecbff;text-decoration:none}
+.psk-nav .brand{font-weight:800;color:#eaf2ff}
+.psk-nav nav{display:flex;gap:14px;flex-wrap:wrap}
+
+    :root{--bg:#08111f;--panel:#0d1931;--text:#e7eefb;--bd:rgba(255,255,255,.12);--pill:#152a52}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{display:flex;gap:12px;align-items:center;padding:12px 16px;background:#0f1730;border-bottom:1px solid var(--bd)}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    input,button{background:#0e1a2f;color:var(--text);border:1px solid var(--bd);border-radius:8px;padding:10px 12px}
+    input::placeholder{color:rgba(255,255,255,.82);opacity:1}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+    .card{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:14px;min-height:150px}
+    .pill{display:inline-block;background:var(--pill);border:1px solid var(--bd);border-radius:999px;padding:4px 10px}
+    .muted{opacity:.85}
+    .teams{font-weight:700;font-size:18px;margin-top:6px}
+    .status{margin-top:6px}
+  </style>
+</head>
+<body>
+  <header class="psk-nav">
+  <a class="brand" href="/index.html">PSK</a>
+  <nav>
+    <a href="/events.html">Events</a>
+    <a href="/viewer.html">Viewer</a>
+    <a href="/courts.html">Courts</a>
+    <a href="/scoreboard.html">Scoreboard</a>
+  </nav>
+</header>
+
+  <div class="wrap">
+    <div class="row">
+      <input id="divisionId" placeholder="Division ID (d123…)">
+      <button id="load">Load</button>
+      <span class="muted">Tip: add ?division=ID to the URL</span>
+    </div>
+    <div id="board" class="grid"></div>
+  </div>
+
+  <script type="module">
+    import { API_BASE } from './src/api.js';
+    const $ = (s)=>document.querySelector(s);
+    const qs = new URLSearchParams(location.search);
+    $('#divisionId').value = qs.get('division')||'';
+
+    $('#load').addEventListener('click', ()=>{
+      const d = ($('#divisionId').value||'').trim();
+      if(!d) return alert('Enter division id');
+      load(d);
+      const u=new URL(location.href); u.searchParams.set('division',d); history.replaceState(null,'',u);
+    });
+
+    async function load(divisionId){
+      try{
+        const data = await fetch(`${API_BASE}/divisions/${divisionId}/matches`).then(r=>r.json());
+        const matches = data.matches || [];
+        if(!matches.length){
+          $('#board').innerHTML = '<div class="muted">No matches yet. Generate the schedule in Admin Console.</div>';
+          return;
+        }
+        // Group by court; fallback to 'TBD' if not assigned
+        const map = new Map();
+        for(const m of matches){
+          const c = (m.court!=null && m.court!=='') ? String(m.court) : 'TBD';
+          if(!map.has(c)) map.set(c, []);
+          map.get(c).push(m);
+        }
+        // Sort by numeric court first, then TBD
+        const courts = Array.from(map.keys()).sort((a,b)=>{
+          const na = a==='TBD' ? Infinity : parseInt(a,10);
+          const nb = b==='TBD' ? Infinity : parseInt(b,10);
+          return (isNaN(na)?Infinity:na) - (isNaN(nb)?Infinity:nb);
+        });
+        const cards = courts.map(c=>{
+          const list = map.get(c)||[];
+          const top = list[0]||{};
+          const teamA = top.home||top.teamA||'A';
+          const teamB = top.away||top.teamB||'B';
+          const sc = (top.scoreA??top.a??0)+' : '+(top.scoreB??top.b??0);
+          const status = top.status||'upcoming';
+          const nexts = list.slice(1,3).map(n=>`${n.home||n.teamA||'A'} vs ${n.away||n.teamB||'B'}`).join('<br>');
+          return `<div class="card">
+            <div><span class="pill">Court ${c}</span></div>
+            <div class="teams">${teamA} <span class="muted">vs</span> ${teamB}</div>
+            <div class="teams"><span class="muted">${sc}</span></div>
+            <div class="status muted">${status}</div>
+            ${nexts?`<div class="muted" style="margin-top:8px">Next:<br>${nexts}</div>`:''}
+          </div>`;
+        }).join('');
+        $('#board').innerHTML = cards;
+      }catch(e){
+        console.error(e);
+        $('#board').innerHTML = '<div class="muted">Failed to load matches for this division.</div>';
+      }
+    }
+
+    // auto
+    if ($('#divisionId').value) load($('#divisionId').value);
+    setInterval(()=>{ const d = ($('#divisionId').value||'').trim(); if(d) load(d); }, 8000);
+  </script>
+</body>
+</html>

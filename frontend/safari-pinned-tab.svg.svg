@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>PSK • Pico Score Keeper — Safari Pinned Tab</title>
+  <defs>
+    <mask id="holes">
+      <!-- full circle white (visible), holes are black (punched out) -->
+      <rect x="0" y="0" width="1024" height="1024" fill="black"/>
+      <circle cx="512" cy="512" r="420" fill="white"/>
+      <!-- holes -->
+      <circle cx="380" cy="420" r="60" fill="black"/>
+      <circle cx="540" cy="360" r="70" fill="black"/>
+      <circle cx="650" cy="520" r="65" fill="black"/>
+      <circle cx="470" cy="620" r="55" fill="black"/>
+      <circle cx="330" cy="560" r="50" fill="black"/>
+    </mask>
+  </defs>
+  <!-- Use a single color fill; Safari applies the pinned-tab color you specify -->
+  <rect x="0" y="0" width="1024" height="1024" fill="black" mask="url(#holes)"/>
+</svg>
